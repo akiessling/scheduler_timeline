@@ -62,7 +62,7 @@ class GanttViewHelper extends AbstractTagBasedViewHelper implements CompilableIn
      *
      * @return string
      */
-    public static function renderStatic(array $arguments, \Closure $renderChildrenClosure, RenderingContextInterface $renderingContext)
+    public static function renderStatic(array $arguments, \Closure $renderChildrenClosure, \TYPO3Fluid\Fluid\Core\Rendering\RenderingContextInterface $renderingContext)
     {
         /** @var TagBuilder $tag */
         $tag = GeneralUtility::makeInstance(TagBuilder::class);
@@ -85,7 +85,7 @@ class GanttViewHelper extends AbstractTagBasedViewHelper implements CompilableIn
 
         $tag->addAttribute('class', 'task ' . $log->getStatus());
         $tag->addAttribute('id', 'uid_' . $log->getUid());
-        $tag->setContent(self::renderChildren());
+        $tag->setContent($renderChildrenClosure());
         return $tag->render();
     }
 }

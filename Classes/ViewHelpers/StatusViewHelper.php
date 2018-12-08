@@ -66,7 +66,7 @@ class StatusViewHelper extends AbstractViewHelper implements CompilableInterface
      *
      * @return string
      */
-    public static function renderStatic(array $arguments, \Closure $renderChildrenClosure, RenderingContextInterface $renderingContext)
+    public static function renderStatic(array $arguments, \Closure $renderChildrenClosure, \TYPO3Fluid\Fluid\Core\Rendering\RenderingContextInterface $renderingContext)
     {
 
         $status = $arguments['status'];

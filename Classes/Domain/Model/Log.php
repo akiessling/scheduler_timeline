@@ -81,7 +81,7 @@ class Log extends \TYPO3\CMS\Extbase\DomainObject\AbstractEntity
     }
 
     /**
-     * @return the $starttime
+     * @return int
      */
     public function getStarttime()
     {
@@ -89,7 +89,7 @@ class Log extends \TYPO3\CMS\Extbase\DomainObject\AbstractEntity
     }
 
     /**
-     * @return the $endtime
+     * @return int
      */
     public function getEndtime()
     {
@@ -105,7 +105,7 @@ class Log extends \TYPO3\CMS\Extbase\DomainObject\AbstractEntity
     }
 
     /**
-     * @return the $returnmessage
+     * @return string
      */
     public function getReturnmessage()
     {

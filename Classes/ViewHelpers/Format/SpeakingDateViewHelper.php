@@ -59,7 +59,7 @@ class SpeakingDateViewHelper extends AbstractViewHelper implements CompilableInt
      * @param RenderingContextInterface $renderingContext
      * @return string
      */
-    public static function renderStatic(array $arguments, \Closure $renderChildrenClosure, RenderingContextInterface $renderingContext)
+    public static function renderStatic(array $arguments, \Closure $renderChildrenClosure, \TYPO3Fluid\Fluid\Core\Rendering\RenderingContextInterface $renderingContext)
     {
 
         $timestamp = $arguments['timestamp'];

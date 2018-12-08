@@ -57,8 +57,9 @@ class DurationViewHelper extends AbstractViewHelper implements CompilableInterfa
      *
      * @return string
      */
-    public static function renderStatic(array $arguments, \Closure $renderChildrenClosure, RenderingContextInterface $renderingContext)
+    public static function renderStatic(array $arguments, \Closure $renderChildrenClosure, \TYPO3Fluid\Fluid\Core\Rendering\RenderingContextInterface $renderingContext)
     {
+
         $duration = $arguments['duration'];
 
         $hours = intval(intval($duration) / 3600);

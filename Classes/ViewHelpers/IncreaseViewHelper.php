@@ -57,7 +57,7 @@ class IncreaseViewHelper extends AbstractViewHelper implements CompilableInterfa
         $this->registerArgument('start', 'string', 'Start time', true);
         $this->registerArgument('end', 'string', 'End time', true);
         $this->registerArgument('interval', 'string', 'Interval of hours', false, '1');
-        $this->registerArgument('iterator', 'string', 'Iterator of hours', false, '1');
+        $this->registerArgument('iterator', 'string', 'Iterator of hours', false, 'i');
     }
 
     /**
@@ -67,21 +67,20 @@ class IncreaseViewHelper extends AbstractViewHelper implements CompilableInterfa
      * @param RenderingContextInterface $renderingContext
      * @return string
      */
-    public static function renderStatic(array $arguments, \Closure $renderChildrenClosure, RenderingContextInterface $renderingContext)
+    public static function renderStatic(array $arguments, \Closure $renderChildrenClosure, \TYPO3Fluid\Fluid\Core\Rendering\RenderingContextInterface $renderingContext)
     {
-        /** @var TemplateVariableContainer $templateVariableContainer */
-        $templateVariableContainer = GeneralUtility::makeInstance(TemplateVariableContainer::class);
-
         $start = $arguments['start'];
         $end = $arguments['end'];
         $interval = $arguments['interval'];
         $iterator = $arguments['iterator'];
 
+        $variableProvider = $renderingContext->getVariableProvider();
+
         $result = '';
         for ($i = $start; $i < $end; $i += $interval) {
-            $templateVariableContainer->add($iterator, $i);
-            $result .= self::renderChildren();
-            $templateVariableContainer->remove($iterator);
+            $variableProvider->add($iterator, $i);
+            $result .= $renderChildrenClosure();
+            $variableProvider->remove($iterator);
         }
         return $result;
     }

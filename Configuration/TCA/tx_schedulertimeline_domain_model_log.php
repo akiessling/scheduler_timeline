@@ -1,67 +1,67 @@
 <?php
 
-return array(
-    'ctrl' => array(
+return [
+    'ctrl' => [
         'label' => 'uid',
         'tstamp' => 'tstamp',
         'title' => 'LLL:EXT:scheduler_timeline/Resources/Private/Language/locallang_tca.xlf:tx_schedulertimeline_domain_model_log',
         'adminOnly' => 1,
         'rootLevel' => 1,
         'hideTable' => 1,
-    ),
-    'columns' => array(
-        'task' => array(
+    ],
+    'columns' => [
+        'task' => [
             'label' => 'task',
-            'config' => array(
+            'config' => [
                 'type' => 'input',
                 'size' => '20',
                 'max' => '30',
-            )
-        ),
-        'starttime' => array(
+            ],
+        ],
+        'starttime' => [
             'label' => 'starttime',
-            'config' => array(
+            'config' => [
                 'type' => 'input',
                 'size' => '20',
                 'max' => '30',
-            )
-        ),
-        'endtime' => array(
+            ],
+        ],
+        'endtime' => [
             'label' => 'endtime',
-            'config' => array(
+            'config' => [
                 'type' => 'input',
                 'size' => '20',
                 'max' => '30',
-            )
-        ),
-        'exception' => array(
+            ],
+        ],
+        'exception' => [
             'label' => 'exception',
-            'config' => array(
+            'config' => [
                 'type' => 'input',
                 'size' => '20',
                 'max' => '30',
-            )
-        ),
-        'returnmessage' => array(
+            ],
+        ],
+        'returnmessage' => [
             'label' => 'returnmessage',
-            'config' => array(
+            'config' => [
                 'type' => 'input',
                 'size' => '20',
                 'max' => '30',
-            )
-        ),
-        'processid' => array(
+            ],
+        ],
+        'processid' => [
             'label' => 'processid',
-            'config' => array(
+            'config' => [
                 'type' => 'input',
                 'size' => '20',
                 'max' => '30',
-            )
-        ),
+            ],
+        ],
 
 
-    ),
-    'types' => array(
-        '0' => array('showitem' => 'task, starttime, endtime, exception, returnmessage, processid')
-    )
-);
+    ],
+    'types' => [
+        '0' => ['showitem' => 'task, starttime, endtime, exception, returnmessage, processid'],
+    ],
+];

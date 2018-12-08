@@ -26,6 +26,7 @@ namespace AOE\SchedulerTimeline\XClass;
  *  This copyright notice MUST APPEAR in all copies of the script!
  ***************************************************************/
 
+use TYPO3\CMS\Core\Database\ConnectionPool;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 
 /**
@@ -35,6 +36,8 @@ use TYPO3\CMS\Core\Utility\GeneralUtility;
  */
 class Scheduler extends \TYPO3\CMS\Scheduler\Scheduler
 {
+
+    const TABLE = 'tx_schedulertimeline_domain_model_log';
 
     /**
      * Wraps the executeTask method
@@ -82,6 +85,7 @@ class Scheduler extends \TYPO3\CMS\Scheduler\Scheduler
      * Extend the method to cleanup up the log table aswell
      *
      * @see tx_scheduler::cleanExecutionArrays()
+     * @throws \Exception
      */
     protected function cleanExecutionArrays()
     {
@@ -93,74 +97,85 @@ class Scheduler extends \TYPO3\CMS\Scheduler\Scheduler
      * Cleanup log
      *
      * @return void
-     * @throws \Exception
      */
     protected function cleanupLog()
     {
         $extConf = unserialize($GLOBALS['TYPO3_CONF_VARS']['EXT']['extConf']['scheduler_timeline']);
 
-        // clean old log entries
-        $dbObj = $GLOBALS['TYPO3_DB']; /* @var $dbObj \TYPO3\CMS\Core\Database\DatabaseConnection */
-        $res = $dbObj->exec_DELETEquery('tx_schedulertimeline_domain_model_log', 'endtime > 0 AND endtime <'.(time()- $extConf['cleanLogEntriesOlderThan'] * 60));
-        if ($res === false) {
-            GeneralUtility::sysLog('Error while cleaning log', 'scheduler_timeline', 0);
-        }
+
+        $table = 'tx_schedulertimeline_domain_model_log';
+        $queryBuilder = $this->getQueryBuilder();
+
+        $queryBuilder
+            ->delete($table)
+            ->where(
+                $queryBuilder->expr()->gt('endtime', 0),
+                $queryBuilder->expr()->lt('endtime', (time()- $extConf['cleanLogEntriesOlderThan'] * 60))
+            )
+            ->execute();
+
 
         // clean tasks, that exceeded the maxLifetime
         $maxDuration = $this->extConf['maxLifetime'] * 60;
-        $dbObj = $GLOBALS['TYPO3_DB']; /* @var $dbObj \TYPO3\CMS\Core\Database\DatabaseConnection */
-        $res = $dbObj->exec_UPDATEquery(
-            'tx_schedulertimeline_domain_model_log',
-            'endtime = 0 AND starttime < ' . (time() - $maxDuration),
-            array(
-                'endtime' => time(),
-                'exception' => serialize(array('message' => 'Task was cleaned up, because it exceeded maxLifetime.'))
+
+        $queryBuilder = $this->getQueryBuilder();
+
+        $queryBuilder
+            ->update($table)
+            ->where(
+                $queryBuilder->expr()->eq('endtime', 0),
+                $queryBuilder->expr()->lt('starttime', (time() - $maxDuration))
             )
-        );
-        if ($res === false) {
-            GeneralUtility::sysLog('Error while cleaning tasks', 'scheduler_timeline', 0);
-        }
+            ->set('endtime', time())
+            ->set('exception', serialize(array('message' => 'Task was cleaned up, because it exceeded maxLifetime.')))
+            ->execute();
 
         // check if process are still alive that have been started more than x minutes ago
         $checkProcessesAfter = intval($extConf['checkProcessesAfter']) * 60;
         if ($checkProcessesAfter) {
-            $res = $dbObj->exec_SELECTquery('uid, processid, task', 'tx_schedulertimeline_domain_model_log', 'endtime = 0 AND starttime < ' . (time() - $checkProcessesAfter));
-            if (is_resource($res)) {
-                while (($row = $dbObj->sql_fetch_assoc($res)) !== false) {
+
+            $queryBuilder = $this->getQueryBuilder();
+
+            $queryBuilder
+                ->getRestrictions()
+                ->removeAll();
+
+            $res = $queryBuilder
+                ->select('*')
+                ->from($table, 't')
+                ->where(
+                    $queryBuilder->expr()->eq('t.endtime', $queryBuilder->createNamedParameter(0)),
+                    $queryBuilder->expr()->lt('t.starttime', $queryBuilder->createNamedParameter((time() - $checkProcessesAfter)))
+                )
+                ->execute();
+
+                while ($row = $res->fetch()) {
                     $processId = $row['processid'];
                     if (!$this->checkProcess($processId)) {
 
-                        // update log
-                        $res2 = $dbObj->exec_UPDATEquery(
-                            'tx_schedulertimeline_domain_model_log',
-                            'uid = '.intval($row['uid']),
-                            array(
-                                'endtime' => time(),
-                                'exception' => serialize(array('message' => 'Task was cleaned up, because it seems to be dead.'))
+                        $queryBuilder = $this->getQueryBuilder();
+                        $queryBuilder
+                            ->update($table)
+                            ->where(
+                                $queryBuilder->expr()->eq('uid', $row['uid'])
                             )
-                        );
-                        if ($res2 === false) {
-                            throw new \Exception('Error while cleaning tasks');
-                        }
+                            ->set('endtime', time())
+                            ->set('exception', serialize(array('message' => 'Task was cleaned up, because it seems to be dead.')))
+                            ->execute();
 
                         $exception = new \TYPO3\CMS\Scheduler\FailedExecutionException('Task was cleaned up, because it seems to be dead.');
 
-                        // update scheduler task
-                        $res3 = $dbObj->exec_UPDATEquery(
-                            'tx_scheduler_task',
-                            'uid = '.intval($row['task']),
-                            array(
-                                'serialized_executions' => '',
-                                'lastexecution_failure' => serialize($exception)
+                        $queryBuilder = $this->getQueryBuilder();
+                        $queryBuilder
+                            ->update($table)
+                            ->where(
+                                $queryBuilder->expr()->eq('uid', $row['task'])
                             )
-                        );
-
-                        if ($res3 === false) {
-                            GeneralUtility::sysLog('Error while cleaning tasks', 'scheduler_timeline', 0);
-                        }
+                            ->set('serialized_executions', '')
+                            ->set('lastexecution_failure', serialize($exception))
+                            ->execute();
                     }
                 }
-            }
         }
     }
 
@@ -174,18 +189,19 @@ class Scheduler extends \TYPO3\CMS\Scheduler\Scheduler
     protected function logStart($taskUid)
     {
         $now = time();
-        $dbObj = $GLOBALS['TYPO3_DB']; /* @var $dbObj \TYPO3\CMS\Core\Database\DatabaseConnection */
-        $res = $dbObj->exec_INSERTquery('tx_schedulertimeline_domain_model_log', array(
-            'pid' => '0',
-            'tstamp' => $now,
-            'starttime' => $now,
-            'task' => $taskUid,
-            'processid' => getmypid()
-        ));
-        if ($res === false) {
-            GeneralUtility::sysLog('Error while inserting log entry', 'scheduler_timeline', 0);
-        }
-        return $dbObj->sql_insert_id();
+
+        $db = GeneralUtility::makeInstance(ConnectionPool::class)->getConnectionForTable(static::TABLE);
+        $db->insert(
+            static::TABLE,
+            [
+                'pid' => '0',
+                'tstamp' => $now,
+                'starttime' => $now,
+                'task' => $taskUid,
+                'processid' => getmypid()
+            ]
+        );
+        return $db->lastInsertId(static::TABLE);
     }
 
     /**
@@ -197,11 +213,9 @@ class Scheduler extends \TYPO3\CMS\Scheduler\Scheduler
      */
     protected function removeLog($logUid)
     {
-        $dbObj = $GLOBALS['TYPO3_DB']; /* @var $dbObj \TYPO3\CMS\Core\Database\DatabaseConnection */
-        $res = $dbObj->exec_DELETEquery('tx_schedulertimeline_domain_model_log', 'uid='.intval($logUid));
-        if ($res === false) {
-            GeneralUtility::sysLog('Error while deleting log entry', 'scheduler_timeline', 0);
-        }
+        $table = 'tx_schedulertimeline_domain_model_log';
+        $connection = GeneralUtility::makeInstance(ConnectionPool::class)->getConnectionForTable($table);
+        $connection->delete($table, ['uid' => $logUid], [$connection::PARAM_INT]);
     }
 
     /**
@@ -224,15 +238,18 @@ class Scheduler extends \TYPO3\CMS\Scheduler\Scheduler
             ));
         }
 
-        $dbObj = $GLOBALS['TYPO3_DB']; /* @var $dbObj \TYPO3\CMS\Core\Database\DatabaseConnection */
-        $res = $dbObj->exec_UPDATEquery('tx_schedulertimeline_domain_model_log', 'uid='.intval($logUid), array(
-            'endtime' => time(),
-            'exception' => $exception,
-            'returnmessage' => $returnMessage
-        ));
-        if ($res === false) {
-            GeneralUtility::sysLog('Error while updating log entry', 'scheduler_timeline', 0);
-        }
+        $db = GeneralUtility::makeInstance(ConnectionPool::class)->getConnectionForTable(static::TABLE);
+        $db->update(
+            static::TABLE,
+            [
+                'endtime' => time(),
+                'exception' => $exception,
+                'returnmessage' => $returnMessage
+            ],
+            [
+                'uid' => $logUid
+            ]
+        );
     }
 
     /**
@@ -260,5 +277,13 @@ class Scheduler extends \TYPO3\CMS\Scheduler\Scheduler
             return false;
         }
         return true;
+    }
+
+    /**
+     * @return \TYPO3\CMS\Core\Database\Query\QueryBuilder
+     */
+    private function getQueryBuilder()
+    {
+        return GeneralUtility::makeInstance(ConnectionPool::class)->getQueryBuilderForTable(static::TABLE);
     }
 }

@@ -69,26 +69,20 @@ class TimelineController extends \TYPO3\CMS\Extbase\Mvc\Controller\ActionControl
      */
     protected function initializeAction()
     {
+        $this->pageRenderer = GeneralUtility::makeInstance(PageRenderer::class);
+
         $this->pageRenderer->addInlineLanguageLabelFile('EXT:scheduler_timeline/Resources/Private/Language/locallang.xml');
 
-        $this->pageRenderer->addCssFile(\TYPO3\CMS\Core\Utility\ExtensionManagementUtility::extRelPath('scheduler_timeline') . 'Resources/Public/StyleSheet/timeline.css');
-        $this->pageRenderer->addCssFile(\TYPO3\CMS\Core\Utility\ExtensionManagementUtility::extRelPath('scheduler_timeline') . 'Resources/Public/StyleSheet/bars.css');
+        $this->pageRenderer->addCssFile('EXT:scheduler_timeline/Resources/Public/StyleSheet/timeline.css');
+        $this->pageRenderer->addCssFile('EXT:scheduler_timeline/Resources/Public/StyleSheet/bars.css');
 
-        $this->pageRenderer->addJsLibrary('jquery', \TYPO3\CMS\Core\Utility\ExtensionManagementUtility::extRelPath('scheduler_timeline') . 'Resources/Public/JavaScript/jquery-1.6.2.min.js');
-        $this->pageRenderer->addJsLibrary('jquery_tooltip', \TYPO3\CMS\Core\Utility\ExtensionManagementUtility::extRelPath('scheduler_timeline') . 'Resources/Public/JavaScript/tooltip.js');
-        $this->pageRenderer->addJsLibrary('jquery_tooltip_dynamic', \TYPO3\CMS\Core\Utility\ExtensionManagementUtility::extRelPath('scheduler_timeline') . 'Resources/Public/JavaScript/tooltip.dynamic.js');
+        $this->pageRenderer->addJsLibrary('jquery', 'EXT:scheduler_timeline/Resources/Public/JavaScript/jquery-1.6.2.min.js');
+        $this->pageRenderer->addJsLibrary('jquery_tooltip', 'EXT:scheduler_timeline/Resources/Public/JavaScript/tooltip.js');
+        $this->pageRenderer->addJsLibrary('jquery_tooltip_dynamic', 'EXT:scheduler_timeline/Resources/Public/JavaScript/tooltip.dynamic.js');
 
-        $this->addJsFileToPageRenderer(\TYPO3\CMS\Core\Utility\ExtensionManagementUtility::extRelPath('scheduler_timeline') . 'Resources/Public/JavaScript/common.js');
+        $this->addJsFileToPageRenderer('EXT:scheduler_timeline/Resources/Public/JavaScript/common.js');
     }
 
-    /**
-     * @param \TYPO3\CMS\Core\Page\PageRenderer $pageRenderer
-     * @return void
-     */
-    public function injectPageRenderer(\TYPO3\CMS\Core\Page\PageRenderer $pageRenderer)
-    {
-        $this->pageRenderer = $pageRenderer;
-    }
 
     /**
      * @param \AOE\SchedulerTimeline\Domain\Repository\LogRepository $logRepository

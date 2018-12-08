@@ -10,7 +10,7 @@
     "issues": "https://github.com/AOEpeople/scheduler_timeline/issues"
   },
   "require": {
-    "typo3/cms": ">=6.2.0,<8.9.99"
+    "typo3/cms": "9.5.*"
   },
   "require-dev": {
     "nimut/testing-framework": "2.0.0",

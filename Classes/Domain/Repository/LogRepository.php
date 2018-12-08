@@ -63,6 +63,7 @@ class LogRepository extends \TYPO3\CMS\Extbase\Persistence\Repository
      * @param int $starttime
      * @param int $endtime
      * @return \TYPO3\CMS\Extbase\Persistence\QueryResultInterface
+     * @throws \TYPO3\CMS\Extbase\Persistence\Exception\InvalidQueryException
      */
     public function findByTime($starttime, $endtime)
     {
@@ -88,6 +89,7 @@ class LogRepository extends \TYPO3\CMS\Extbase\Persistence\Repository
     public function findGroupedByTask()
     {
         $logs = $this->findAll();
+
         $result = array();
         foreach ($logs as $log) { /* @var $log \AOE\SchedulerTimeline\Domain\Model\Log */
             $task = $log->getTask();

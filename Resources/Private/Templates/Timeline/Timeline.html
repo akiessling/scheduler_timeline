@@ -3,21 +3,18 @@
 <f:layout name="module" />
 
 <f:section name="main">
-
 	<h2>Scheduler Timeline</h2>
-
 	<f:if condition="{groupedLogs -> f:count()}">
 		<f:else>No logs found!</f:else>
 		<f:then>
-
 			<div id="maincontainer">
-
 				<div id="contentwrapper">
 					<div id="contentcolumn">
 						<div class="timeline-box">
 							<div class="timeline-panel" style="width: {timelinePanelWidth}px;">
 
 								<div id="now" style="left: {now}px;"></div>
+
 
 								<div class="row hours">
 									<div class="timeline">
